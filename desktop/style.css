@@ -1,0 +1,80 @@
+/* JARVIS Desktop Widget — Compositor-Safe Styling
+ *
+ * Design rules:
+ * - No CSS transitions or animations (JS-driven instead)
+ * - No backdrop-filter (native acrylic via Electron handles blur)
+ * - Layout isolation via contain: strict
+ * - Body transparent to show native acrylic through
+ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+}
+
+/* Assistant Layout Wrapper (User Requested) */
+.assistant-container {
+    position: fixed;
+    bottom: 25px;
+    /* Standard Taskbar Height */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    /* small gap between sphere and text */
+    pointer-events: none;
+    z-index: 9999;
+}
+
+#container {
+    /* Position handled by wrapper */
+    padding: 0;
+    margin: 0;
+    display: flex;
+    /* Ensure canvas aligns */
+    pointer-events: none;
+}
+
+canvas {
+    display: block;
+    pointer-events: none;
+    image-rendering: high-quality;
+    /* Soft Radial Fade (User Premium Fix) */
+    -webkit-mask-image: radial-gradient(circle, black 60%, transparent 100%);
+    mask-image: radial-gradient(circle, black 60%, transparent 100%);
+}
+
+#state-label {
+    /* Position handled by wrapper */
+    position: static;
+    transform: none;
+
+    color: rgba(0, 234, 255, 0.8);
+    /* Clean Cyan with slight fade */
+    font-size: 11px;
+    /* Compact but readable */
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    pointer-events: none;
+    text-shadow: 0 0 10px rgba(0, 234, 255, 0.3);
+}

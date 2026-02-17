@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS - Neural Core</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Import map for Three.js modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+
+<body>
+    <!-- Status indicator -->
+    <div id="status" class="status">
+        <div class="status-dot"></div>
+        <span id="status-text">Connecting to JARVIS...</span>
+    </div>
+
+    <!-- Debug info -->
+    <div id="debug"
+        style="position: fixed; top: 60px; left: 20px; color: #00F0FF; font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; max-width: 400px; display: none;">
+        <div id="debug-text">Debug info will appear here</div>
+    </div>
+
+    <!-- Three.js canvas will be added here by app.js -->
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

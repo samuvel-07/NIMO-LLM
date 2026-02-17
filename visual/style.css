@@ -1,0 +1,77 @@
+/* JARVIS Visual Styling */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #05070D;
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: #00F0FF;
+}
+
+canvas {
+    display: block;
+}
+
+/* Status indicator */
+.status {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(0, 15, 25, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00F0FF;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Disconnected state */
+body.disconnected .status {
+    border-color: rgba(255, 80, 80, 0.5);
+}
+
+body.disconnected .status-dot {
+    background: #ff5050;
+}
+
+/* State-based background blur */
+body.blur {
+    backdrop-filter: blur(20px);
+}
+
+/* Fullscreen mode */
+body.fullscreen {
+    cursor: none;
+}
+
+body.fullscreen .status {
+    opacity: 0.3;
+    transition: opacity 0.3s;
+}
+
+body.fullscreen:hover .status {
+    opacity: 1;
+}
