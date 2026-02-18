@@ -168,16 +168,127 @@ function connectWebSocket() {
             if (isShuttingDown) return;
             try {
                 const data = JSON.parse(event.data);
+
+                // --- Legacy State Handling ---
                 if (data.state) {
                     stateManager.setState(data.state, data.audio || 0);
                     updateStateLabel(data.state);
 
-                    // Update uState uniform
                     const u = material.uniforms;
                     if (data.state === 'IDLE') u.uState.value = 0.0;
                     if (data.state === 'LISTENING') u.uState.value = 1.0;
                     if (data.state === 'RESPONDING') u.uState.value = 2.0;
                 }
+
+                // --- Brain Event Handling ---
+                // Map Brain Events to Visual States
+                if (data.type) {
+                    let nextState = null;
+                    let nextAudio = 0.0;
+
+                    switch (data.type) {
+                        case 'DECISION':
+                            // Brain is thinking/deciding
+                            // If action is EXECUTE, maybe we go to EXECUTING soon?
+                            // For now, DECISION might be instant, but let's show activity
+                            // If confidence is high, maybe RESPONDING? 
+                            // Let's use RESPONDING for "Thinking" visual for now
+                            if (data.payload && data.payload.action === 'CLARIFY') {
+                                nextState = STATES.RESPONDING;
+                            } else {
+                                nextState = STATES.RESPONDING;
+                            }
+                            break;
+
+                        case 'EXECUTION_START':
+                            nextState = STATES.EXECUTING;
+                            nextAudio = 0.5;
+                            break;
+
+                        case 'EXECUTION_SUCCESS':
+                            nextState = STATES.SUCCESS;
+                            // Auto-return to IDLE after a moment? 
+                            // For now, stick to SUCCESS, maybe Orchestrator sends IDLE later?
+                            // Or we set a timeout? 
+                            // The visual engine is reactive. Let's just set state.
+                            setTimeout(() => {
+                                if (stateManager.currentState === STATES.SUCCESS) {
+                                    stateManager.setState(STATES.IDLE);
+                                    updateStateLabel('IDLE');
+                                    material.uniforms.uState.value = 0.0;
+                                }
+                            }, 2000);
+                            break;
+
+                        case 'EXECUTION_FAILURE':
+                            nextState = STATES.ERROR;
+                            setTimeout(() => {
+                                if (stateManager.currentState === STATES.ERROR) {
+                                    stateManager.setState(STATES.IDLE);
+                                    updateStateLabel('IDLE');
+                                    material.uniforms.uState.value = 0.0;
+                                }
+                            }, 2000);
+                            break;
+
+                        case 'CONFIRMATION_REQUIRED':
+                            nextState = STATES.CONFIRM;
+                            break;
+
+                        case 'CONFIRMATION_ACCEPTED':
+                            nextState = STATES.EXECUTING; // Transition to executing
+                            break;
+
+                        case 'CONFIRMATION_PENDING_BLOCKED':
+                            nextState = STATES.CONFIRM; // Re-assert Amber state
+                            break;
+
+                        case 'CONFIRMATION_CANCELLED':
+                            nextState = STATES.IDLE;
+                            // Maybe a visual cue for cancel? 
+                            // For now IDLE is fine.
+                            break;
+
+                        case 'CONFIRMATION_EXPIRED':
+                            nextState = STATES.ERROR; // Soft error/fade
+                            setTimeout(() => {
+                                if (stateManager.currentState === STATES.ERROR) {
+                                    stateManager.setState(STATES.IDLE);
+                                    updateStateLabel('IDLE');
+                                    material.uniforms.uState.value = 0.0;
+                                }
+                            }, 2000);
+                            break;
+
+                        case 'PERMISSION_DENIED':
+                            nextState = STATES.DENIED;
+                            setTimeout(() => {
+                                if (stateManager.currentState === STATES.DENIED) {
+                                    stateManager.setState(STATES.IDLE);
+                                    updateStateLabel('IDLE');
+                                    material.uniforms.uState.value = 0.0;
+                                }
+                            }, 2000);
+                            break;
+                    }
+
+                    if (nextState) {
+                        stateManager.setState(nextState, nextAudio);
+                        updateStateLabel(nextState);
+
+                        // Uniform mappings for shader
+                        const u = material.uniforms;
+                        if (nextState === STATES.IDLE) u.uState.value = 0.0;
+                        if (nextState === STATES.LISTENING) u.uState.value = 1.0;
+                        if (nextState === STATES.RESPONDING) u.uState.value = 2.0;
+                        if (nextState === STATES.EXECUTING) u.uState.value = 2.0; // Same as responding for now
+                        if (nextState === STATES.SUCCESS) u.uState.value = 1.0;   // Listening blue? Or add new?
+                        if (nextState === STATES.ERROR) u.uState.value = 0.0;
+                        if (nextState === STATES.CONFIRM) u.uState.value = 2.0;
+                        if (nextState === STATES.DENIED) u.uState.value = 0.0;
+                    }
+                }
+
                 if (data.audio !== undefined) {
                     stateManager.setAudio(data.audio);
                 }

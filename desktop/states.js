@@ -5,6 +5,11 @@ export const STATES = {
     IDLE: 'IDLE',
     LISTENING: 'LISTENING',
     RESPONDING: 'RESPONDING',
+    EXECUTING: 'EXECUTING',
+    SUCCESS: 'SUCCESS',
+    ERROR: 'ERROR',
+    CONFIRM: 'CONFIRM',
+    DENIED: 'DENIED',
     SHUTDOWN: 'SHUTDOWN'
 };
 
@@ -25,11 +30,46 @@ const STATE_CONFIG = {
         particleSize: 12.0
     },
     RESPONDING: {
-        expansion: 1.05,   // Burst allowed (mask will soften edge)
+        expansion: 1.05,
         glow: 0.05,
-        ripple: 0.0,
+        ripple: 0.1, // Added ripple for activity
         audioScale: 1.0,
         particleSize: 11.0
+    },
+    EXECUTING: {
+        expansion: 1.1,    // Larger expansion
+        glow: 0.2,         // Brighter
+        ripple: 0.5,       // Fast ripple
+        audioScale: 0.5,
+        particleSize: 12.0
+    },
+    SUCCESS: {
+        expansion: 1.15,   // Pulse out
+        glow: 0.3,         // Flash
+        ripple: 0.0,
+        audioScale: 0.0,
+        particleSize: 14.0
+    },
+    ERROR: {
+        expansion: 0.85,   // Shrink
+        glow: 0.0,
+        ripple: 0.0,
+        audioScale: 0.0,
+        particleSize: 8.0  // Small particles
+    },
+    CONFIRM: {
+        expansion: 1.0,
+        glow: 0.5,         // High glow (Attention)
+        ripple: 0.2,
+        audioScale: 0.0,
+        particleSize: 12.0
+    },
+    DENIED: {
+        expansion: 0.9,
+        glow: 0.0,
+        ripple: 0.0,
+        audioScale: 0.0,
+        particleSize: 9.0
     },
     SHUTDOWN: {
         expansion: 0.8,

@@ -20,7 +20,7 @@ if not exist "%~dp0desktop\node_modules" (
 
 REM ── Start WebSocket backend ──
 echo [2/3] Starting WebSocket backend...
-start "JARVIS Backend" /min cmd /k "cd /d "%~dp0" && python backend\websocket_server.py"
+start "JARVIS Backend" /min cmd /k "cd /d "%~dp0" && python run_brain.py"
 timeout /t 2 /nobreak >nul
 
 REM ── Launch Electron via clean-env launcher ──
