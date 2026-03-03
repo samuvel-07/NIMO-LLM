@@ -20,13 +20,23 @@ if not exist "%~dp0desktop\node_modules" (
 
 REM ── Start WebSocket backend ──
 echo [2/3] Starting WebSocket backend...
-start "JARVIS Backend" /min cmd /k "cd /d "%~dp0" && python run_brain.py"
-timeout /t 2 /nobreak >nul
+if exist "%~dp0.jarvis_ready" del "%~dp0.jarvis_ready"
+
+REM Start Python backend in a new window, piping output to the console but also touching a ready flag
+start "JARVIS Backend" /min cmd /c "chcp 65001 >nul && set PYTHONIOENCODING=utf-8 && cd /d "%~dp0" && call .venv_gpu\Scripts\activate && python run_brain.py"
+
+echo    Waiting for AI Models to load into GPU (This prevents system stutter)...
+:waitloop
+if exist "%~dp0.jarvis_ready" goto :launch_electron
+timeout /t 1 /nobreak >nul
+goto :waitloop
+
+:launch_electron
 
 REM ── Launch Electron via clean-env launcher ──
 echo [3/3] Launching JARVIS Desktop...
 cd /d "%~dp0desktop"
-node launch.js --dev
+node launch.js
 
 echo.
 echo ============================================================
@@ -34,7 +44,7 @@ echo    JARVIS Desktop closed.
 echo ============================================================
 
 REM ── Cleanup backend ──
-taskkill /FI "WindowTitle eq JARVIS Backend*" >nul 2>&1
+taskkill /F /T /FI "WindowTitle eq JARVIS Backend*" >nul 2>&1
 
 echo Goodbye.
 pause

@@ -1,13 +1,14 @@
-from .decision_schema import Decision
-from .thresholds import (
+from brain.decision_schema import Decision # type: ignore
+from brain.thresholds import ( # type: ignore
     EXECUTION_THRESHOLD,
     CLARIFICATION_THRESHOLD,
     DANGEROUS_THRESHOLD,
     DANGEROUS_SKILLS
 )
-from .scoring.keyword_scorer import KeywordScorer
-from .scoring.pattern_scorer import PatternScorer
-from .scoring.context_scorer import ContextScorer
+from brain.scoring.keyword_scorer import KeywordScorer # type: ignore
+from brain.scoring.pattern_scorer import PatternScorer # type: ignore
+from brain.scoring.context_scorer import ContextScorer # type: ignore
+from brain.llm_fallback import LLMSkillInterpreter # type: ignore
 
 class ArbitrationEngine:
 
@@ -16,6 +17,7 @@ class ArbitrationEngine:
         self.keyword_scorer = KeywordScorer(skill_registry)
         self.pattern_scorer = PatternScorer(skill_registry)
         self.context_scorer = ContextScorer(skill_registry)
+        self.llm_interpreter = LLMSkillInterpreter()
 
     def evaluate(self, text: str, context: dict) -> Decision:
         # Collect real scores
@@ -27,7 +29,7 @@ class ArbitrationEngine:
             best_score = 0.0
             margin = 0.0
         else:
-            best_skill = max(scores, key=scores.get)
+            best_skill = max(scores, key=scores.get) # type: ignore
             best_score = scores[best_skill]
             
             sorted_scores = sorted(scores.values(), reverse=True)
@@ -67,8 +69,10 @@ class ArbitrationEngine:
             reason = "Confidence in clarification range"
 
         else:
+            # Low confidence -> Route to Groq conversation engine (LLM_FALLBACK)
+            print("[INFO] Deterministic score low. Routing to Groq Conversation Mode...")
             action = "LLM_FALLBACK"
-            reason = "Low confidence, fallback to LLM"
+            reason = "Deterministic score below threshold — routing to Groq"
 
         return Decision(
             action=action,
@@ -81,12 +85,12 @@ class ArbitrationEngine:
             reason=reason
         )
 
-    def _collect_scores(self, text: str, context: dict):
+    def _collect_scores(self, text: str, context: dict) -> dict[str, float]:
         keyword_scores = self.keyword_scorer.score(text)
         pattern_scores = self.pattern_scorer.score(text)
         context_scores = self.context_scorer.score(text, context)
 
-        final_scores = {}
+        final_scores: dict[str, float] = {}
 
         # Assuming skill registry ensures both scorers return same keys (skills)
         # Use keyword scores as base iterator

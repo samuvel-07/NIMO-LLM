@@ -1,7 +1,7 @@
 // JARVIS Desktop — Electron Main Process
 // Native frameless window with acrylic blur, ordered lifecycle cleanup
 
-const { app, BrowserWindow, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
 const os = require('os');
 
@@ -24,6 +24,12 @@ const nativeAcrylic = isAcrylicSupported();
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+
+// ── Cache & Permission Overrides (Fixes Access Denied 0x5) ─────────────
+// Force Electron to write its cache and session data to the user's AppData 
+// instead of the restrictive project folder where it lacks permissions.
+app.setPath("userData", path.join(app.getPath("appData"), "JARVIS"));
+app.setPath("cache", path.join(app.getPath("appData"), "JARVIS", "Cache"));
 
 // ── State ────────────────────────────────────────────────────────────
 // ── Safety: Prevent crash dialogs ────────────────────────────────────
@@ -72,6 +78,7 @@ function createWindow() {
         movable: false,
         hasShadow: false,
         alwaysOnTop: true,
+        icon: path.join(__dirname, 'jarvis_brain.ico'),
 
         // Fully transparent background (Critical for no-square look)
         backgroundColor: '#00000000',
@@ -113,9 +120,10 @@ function createWindow() {
     });
 
     // ── Dev Tools: Only in development ───────────────────────────────────
-    if (!app.isPackaged) {
-        mainWindow.webContents.openDevTools({ mode: 'detach' });
-    }
+    // Disabled for clean JARVIS experience
+    // if (!app.isPackaged) {
+    //     mainWindow.webContents.openDevTools({ mode: 'detach' });
+    // }
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -140,6 +148,14 @@ ipcMain.on('renderer:shutdown-complete', () => {
     isQuitting = true;
     app.quit();
 });
+
+// Hard kill switch triggered by user Hotkey 'S'
+function hardKillSystem() {
+    console.warn('[JARVIS] HARD KILL INITIATED BY USER HOTKEY.');
+    isQuitting = true;
+    // Let the batch script's taskkill /F catch the exit and nuke the python tree
+    app.exit(0);
+}
 
 function initiateShutdown() {
     if (isQuitting) return;
@@ -173,6 +189,40 @@ app.on('before-quit', (event) => {
 app.whenReady().then(() => {
     console.log('[JARVIS] App ready');
     createWindow();
+
+    // ── Global Hotkey: Ctrl+Alt+Shift+J → Toggle JARVIS visibility ──
+    const registered = globalShortcut.register('CommandOrControl+Alt+Shift+J', () => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        if (mainWindow.isVisible()) {
+            console.log('[JARVIS] Hotkey: Hiding');
+            mainWindow.hide();
+        } else {
+            console.log('[JARVIS] Hotkey: Showing');
+            mainWindow.show();
+            mainWindow.setAlwaysOnTop(true);
+        }
+    });
+    if (registered) {
+        console.log('[JARVIS] Global hotkey registered: Ctrl+Alt+Shift+J');
+    } else {
+        console.warn('[JARVIS] Failed to register global hotkey');
+    }
+
+    // ── Global Hotkey: Ctrl+Shift+S → Hard Kill JARVIS ──
+    const killRegistered = globalShortcut.register('CommandOrControl+Shift+S', () => {
+        hardKillSystem();
+    });
+    if (killRegistered) {
+        console.log('[JARVIS] Global kill-switch registered: Ctrl+Shift+S');
+    }
+
+    // ── Local Hotkey: 'S' while window is focused ──
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.key.toLowerCase() === 's') {
+            hardKillSystem();
+            event.preventDefault();
+        }
+    });
 });
 
 app.on('window-all-closed', () => {
@@ -180,4 +230,8 @@ app.on('window-all-closed', () => {
         isQuitting = true;
     }
     app.quit();
+});
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
 });

@@ -144,7 +144,39 @@ function connectWebSocket() {
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            setState(data.state, data.audio);
+
+            // Legacy format: { state, audio }
+            if (data.state) {
+                setState(data.state, data.audio || 0);
+                return;
+            }
+
+            // v4.0 Event format: { type, payload }
+            const { type, payload } = data;
+
+            if (type === "WAKE_WORD_DETECTED") {
+                setState("LISTENING", 0.1);
+            } else if (type === "EXECUTION_START") {
+                setState("PROCESSING", 0.05);
+            } else if (type === "EXECUTION_SUCCESS") {
+                const conf = payload.confidence || 0.5;
+                // High confidence = stronger burst
+                const audioBoost = conf > 0.8 ? 0.6 : 0.3;
+                setState("RESPONDING", audioBoost);
+                // Return to idle after 2s
+                setTimeout(() => setState("IDLE", 0), 2000);
+            } else if (type === "EXECUTION_FAILURE") {
+                // Brief red flash effect — spike audio then drop
+                setState("RESPONDING", 0.8);
+                setTimeout(() => setState("IDLE", 0), 1500);
+            } else if (type === "LLM_RESPONSE") {
+                // Subtle pulse for LLM
+                setState("RESPONDING", 0.2);
+                setTimeout(() => setState("IDLE", 0), 3000);
+            } else if (type === "PARTIAL_TRANSCRIPT") {
+                // Stay in listening with slight audio
+                setState("LISTENING", 0.15);
+            }
         };
 
         socket.onclose = (event) => {
@@ -213,7 +245,11 @@ window.addEventListener('keydown', (e) => {
     if (e.key === '3') setState("PROCESSING", 0.05);
     if (e.key === '4') setState("RESPONDING", 0.5);
     if (e.key === 's' || e.key === 'S') {
-        console.log("Graceful shutdown triggered by user");
+        console.log("[JARVIS] Shutdown requested via S key");
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "SHUTDOWN" }));
+        }
+        // Also trigger visual shutdown
         window.performGracefulShutdown();
     }
     if (e.key === 'Escape') window.close();

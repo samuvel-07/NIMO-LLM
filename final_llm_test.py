@@ -9,7 +9,7 @@ print("=" * 60)
 
 # Test LLM Handler
 print("\n[1/3] Testing LLM Handler...")
-from llm_handler import LLMHandler
+from llm_handler import LLMHandler # type: ignore
 
 llm = LLMHandler(model="llama3.2:3b")
 
@@ -29,7 +29,7 @@ else:
 
 # Test Intent Routing
 print("\n[2/3] Testing Intent Classification...")
-from intent_classifier import IntentClassifier
+from intent_classifier import IntentClassifier # type: ignore
 
 classifier = IntentClassifier()
 

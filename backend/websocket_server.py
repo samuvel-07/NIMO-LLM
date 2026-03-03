@@ -2,7 +2,7 @@
 # Sends visual states to Three.js frontend
 
 import asyncio
-import websockets
+import websockets # type: ignore
 import json
 import time
 

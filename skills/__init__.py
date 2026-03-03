@@ -1,1 +1,1 @@
-from .base_skill import BaseSkill
+from .base_skill import BaseSkill # type: ignore

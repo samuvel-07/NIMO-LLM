@@ -7,8 +7,20 @@ class IntentRouter:
         This will eventually load keywords, regex patterns, or a small BERT model.
         """
         self.command_keywords = [
-            "open", "close", "start", "stop", "turn on", "turn off",
-            "search", "play", "volume", "mute"
+            # App control
+            "open", "close", "start", "stop", "launch", "quit", "exit",
+            # Window management
+            "switch", "minimize", "maximize", "restore", "snap",
+            # Mouse & keyboard
+            "click", "right click", "double click", "press", "move mouse",
+            "scroll", "mark", "drag", "undo", "redo", "copy", "paste", "cut",
+            # Dictation & text
+            "type", "dictate", "spell", "correct", "select",
+            # Search & system
+            "search", "google", "look up",
+            "turn on", "turn off", "play", "volume", "mute",
+            # Narrator & voice
+            "narrator", "scan mode", "voice access", "cancel", "help",
         ]
 
     def determine_intent(self, text):

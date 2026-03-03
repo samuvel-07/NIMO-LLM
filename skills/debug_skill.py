@@ -1,6 +1,6 @@
 import asyncio
 from typing import Dict, List
-from .base_skill import BaseSkill
+from .base_skill import BaseSkill # type: ignore
 
 class TimeoutSkill(BaseSkill):
     name = "timeout_skill"

@@ -1,7 +1,7 @@
 import importlib
 import pkgutil
-import skills
-from skills.base_skill import BaseSkill
+import skills # type: ignore
+from skills.base_skill import BaseSkill # type: ignore
 
 
 class SkillRegistry:

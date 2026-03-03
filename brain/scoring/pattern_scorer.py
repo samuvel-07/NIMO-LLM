@@ -15,6 +15,6 @@ class PatternScorer:
             # Check if any pattern matches the input text
             match_found = any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
 
-            scores[skill.name] = 1.0 if match_found else 0.0
+            scores[skill.name] = 1.0 if match_found else 0.0  # type: ignore
 
         return scores

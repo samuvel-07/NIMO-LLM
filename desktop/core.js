@@ -187,12 +187,32 @@ function connectWebSocket() {
                     let nextAudio = 0.0;
 
                     switch (data.type) {
+                        case 'WAKE_WORD_DETECTED':
+                            // Pulse/Flash
+                            nextState = STATES.LISTENING; // Or a specific WAKE state?
+                            // Let's use LISTENING but with high initial energy
+                            nextAudio = 0.8;
+                            updateStateLabel(`LISTENING (${data.payload.word})`);
+                            break;
+
+                        case 'PARTIAL_TRANSCRIPT':
+                            // Update label with live text
+                            // Don't change state, just label
+                            if (stateManager.currentState === STATES.LISTENING) {
+                                updateStateLabel(`"${data.payload.text}..."`);
+                                // Add some audio reactivity based on text length change?
+                                nextAudio = 0.2 + (Math.random() * 0.3);
+                                stateManager.setAudio(nextAudio);
+                            }
+                            return; // Don't trigger full state reset
+
+                        case 'INTERRUPT_SIGNAL':
+                            nextState = STATES.IDLE;
+                            updateStateLabel("⛔ INTERRUPTED");
+                            break;
+
                         case 'DECISION':
                             // Brain is thinking/deciding
-                            // If action is EXECUTE, maybe we go to EXECUTING soon?
-                            // For now, DECISION might be instant, but let's show activity
-                            // If confidence is high, maybe RESPONDING? 
-                            // Let's use RESPONDING for "Thinking" visual for now
                             if (data.payload && data.payload.action === 'CLARIFY') {
                                 nextState = STATES.RESPONDING;
                             } else {
@@ -207,10 +227,6 @@ function connectWebSocket() {
 
                         case 'EXECUTION_SUCCESS':
                             nextState = STATES.SUCCESS;
-                            // Auto-return to IDLE after a moment? 
-                            // For now, stick to SUCCESS, maybe Orchestrator sends IDLE later?
-                            // Or we set a timeout? 
-                            // The visual engine is reactive. Let's just set state.
                             setTimeout(() => {
                                 if (stateManager.currentState === STATES.SUCCESS) {
                                     stateManager.setState(STATES.IDLE);
@@ -245,8 +261,6 @@ function connectWebSocket() {
 
                         case 'CONFIRMATION_CANCELLED':
                             nextState = STATES.IDLE;
-                            // Maybe a visual cue for cancel? 
-                            // For now IDLE is fine.
                             break;
 
                         case 'CONFIRMATION_EXPIRED':
@@ -274,7 +288,9 @@ function connectWebSocket() {
 
                     if (nextState) {
                         stateManager.setState(nextState, nextAudio);
-                        updateStateLabel(nextState);
+                        if (data.type !== 'WAKE_WORD_DETECTED' && data.type !== 'INTERRUPT_SIGNAL') {
+                            updateStateLabel(nextState);
+                        }
 
                         // Uniform mappings for shader
                         const u = material.uniforms;
@@ -340,6 +356,10 @@ function keydownHandler(e) {
             stateManager.setState(STATES.LISTENING, 0.1);
             updateStateLabel('LISTENING');
             material.uniforms.uState.value = 1.0;
+            // Send FORCE_LISTEN to backend — bypass wake word
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "FORCE_LISTEN" }));
+            }
             break;
         case '3':
             stateManager.setState(STATES.RESPONDING, 0.5);

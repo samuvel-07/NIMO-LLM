@@ -1,0 +1,9 @@
+faster-whisper
+pvporcupine
+pyaudio
+requests
+numpy<2.0.0
+pyttsx3
+websockets
+python-dotenv
+psutil

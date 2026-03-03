@@ -22,6 +22,7 @@ wheels/
 *.egg
 jarvis_env/
 .venv/
+.venv_gpu/
 venv/
 
 # Node.js
@@ -37,7 +38,15 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Secrets
+.env
+
 # Project Specific
 temp_tts.wav
 *.spec
 *.log
+brain_events.log
+memory.json
+.jarvis_ready
+output/
+_legacy/
